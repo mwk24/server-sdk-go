@@ -39,7 +39,7 @@ type LocalSampleTrack struct {
 	audioLevelID uint8
 
 	cancelWrite func()
-	provider    SampleProvider
+	Provider    SampleProvider
 	onBind      func()
 	onUnbind    func()
 	// notify when sample provider responds with EOF
@@ -110,7 +110,7 @@ func (s *LocalSampleTrack) Bind(t webrtc.TrackLocalContext) (webrtc.RTPCodecPara
 	)
 	s.clockRate = float64(codec.RTPCodecCapability.ClockRate)
 	onBind := s.onBind
-	provider := s.provider
+	provider := s.Provider
 	onWriteComplete := s.onWriteComplete
 	atomic.StoreUint32(&s.bound, 1)
 	s.lock.Unlock()
@@ -130,7 +130,7 @@ func (s *LocalSampleTrack) Bind(t webrtc.TrackLocalContext) (webrtc.RTPCodecPara
 // Unbind is an interface for TrackLocal, not for external consumption
 func (s *LocalSampleTrack) Unbind(t webrtc.TrackLocalContext) error {
 	s.lock.Lock()
-	provider := s.provider
+	provider := s.Provider
 	onUnbind := s.onUnbind
 	atomic.StoreUint32(&s.bound, 0)
 	cancel := s.cancelWrite
@@ -157,15 +157,15 @@ func (s *LocalSampleTrack) Unbind(t webrtc.TrackLocalContext) error {
 func (s *LocalSampleTrack) StartWrite(provider SampleProvider, onComplete func()) error {
 	s.lock.Lock()
 	defer s.lock.Unlock()
-	if s.provider == provider {
+	if s.Provider == provider {
 		return nil
 	}
 
 	// when bound and already writing, ignore
 	if s.IsBound() {
 		// unbind previous provider
-		if s.provider != nil {
-			if err := s.provider.OnUnbind(); err != nil {
+		if s.Provider != nil {
+			if err := s.Provider.OnUnbind(); err != nil {
 				return err
 			}
 		}
@@ -175,7 +175,7 @@ func (s *LocalSampleTrack) StartWrite(provider SampleProvider, onComplete func()
 		// start new writer
 		go s.writeWorker(provider, onComplete)
 	}
-	s.provider = provider
+	s.Provider = provider
 	s.onWriteComplete = onComplete
 	return nil
 }

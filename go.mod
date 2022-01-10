@@ -18,3 +18,5 @@ require (
 	google.golang.org/protobuf v1.27.1
 	gopkg.in/square/go-jose.v2 v2.6.0 // indirect
 )
+
+replace github.com/pion/webrtc/v3 => /Users/mark/dev/webrtc

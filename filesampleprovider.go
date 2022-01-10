@@ -109,6 +109,10 @@ func NewLocalFileTrack(file string, options ...FileSampleProviderOption) (*Local
 	return track, nil
 }
 
+func (p *FileSampleProvider) SkipToTimestamp(timestamp uint64) {
+	p.ivfreader.SkipToTimestamp(timestamp)
+}
+
 func (p *FileSampleProvider) OnBind() error {
 	var err error
 	p.file, err = os.Open(p.FileName)
