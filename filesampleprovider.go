@@ -113,6 +113,10 @@ func (p *FileSampleProvider) SkipToTimestamp(timestamp uint64) {
 	p.ivfreader.SkipToTimestamp(timestamp)
 }
 
+func (p *FileSampleProvider) SkipNumberOfTimestamps(skipAmount int64) {
+	p.ivfreader.SkipNumberOfTimestamps(skipAmount)
+}
+
 func (p *FileSampleProvider) OnBind() error {
 	var err error
 	p.file, err = os.Open(p.FileName)
