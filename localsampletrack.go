@@ -263,6 +263,7 @@ func (s *LocalSampleTrack) writeWorker(provider SampleProvider, onComplete func(
 	for {
 		sample, err := provider.NextSample()
 		if err == io.EOF {
+			logger.Info("sample provider EOF")
 			return
 		}
 		if err != nil {
@@ -293,6 +294,7 @@ func (s *LocalSampleTrack) writeWorker(provider SampleProvider, onComplete func(
 		case <-ticker.C:
 			continue
 		case <-ctx.Done():
+			logger.Info("sample provider context canceled")
 			return
 		}
 	}
