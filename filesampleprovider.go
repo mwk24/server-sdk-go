@@ -1,6 +1,8 @@
 package lksdk
 
 import (
+	"errors"
+	"io"
 	"os"
 	"path/filepath"
 	"time"
@@ -26,6 +28,7 @@ type FileSampleProvider struct {
 	OnWriteComplete func()
 	AudioLevel      uint8
 	file            *os.File
+	lastSample      media.Sample
 
 	// for vp8
 	ivfreader     *ivfreader.IVFReader
@@ -138,6 +141,7 @@ func (p *FileSampleProvider) OnBind() error {
 		err = ErrUnsupportedFileType
 	}
 	if err != nil {
+		logger.Info("error opening file", "error", err)
 		_ = p.file.Close()
 		return err
 	}
@@ -145,6 +149,7 @@ func (p *FileSampleProvider) OnBind() error {
 }
 
 func (p *FileSampleProvider) OnUnbind() error {
+	logger.Info("unbinding")
 	return p.file.Close()
 }
 
@@ -180,6 +185,10 @@ func (p *FileSampleProvider) NextSample() (media.Sample, error) {
 	case webrtc.MimeTypeVP8:
 		frame, header, err := p.ivfreader.ParseNextFrame()
 		if err != nil {
+			if errors.Is(err, io.EOF) {
+				logger.Info("sending previous sample from timestamp: ", p.lastTimestamp)
+				return p.lastSample, nil
+			}
 			return sample, err
 		}
 		delta := header.Timestamp - p.lastTimestamp
@@ -204,5 +213,7 @@ func (p *FileSampleProvider) NextSample() (media.Sample, error) {
 	if p.FrameDuration > 0 {
 		sample.Duration = p.FrameDuration
 	}
+
+	p.lastSample = sample
 	return sample, nil
 }

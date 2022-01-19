@@ -92,6 +92,14 @@ func (e *RTCEngine) TrackPublishedChan() <-chan *livekit.TrackPublishedResponse 
 	return e.trackPublishedChan
 }
 
+func (e *RTCEngine) PublisherPeerConnection() *webrtc.PeerConnection {
+	return e.publisher.PeerConnection()
+}
+
+func (e *RTCEngine) SubscriberPeerConnection() *webrtc.PeerConnection {
+	return e.subscriber.PeerConnection()
+}
+
 func (e *RTCEngine) configure(res *livekit.JoinResponse) error {
 	iceServers := FromProtoIceServers(res.IceServers)
 	var err error

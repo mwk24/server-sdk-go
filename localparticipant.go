@@ -10,13 +10,13 @@ import (
 
 type LocalParticipant struct {
 	baseParticipant
-	engine *RTCEngine
+	Engine *RTCEngine
 }
 
 func newLocalParticipant(engine *RTCEngine, roomcallback *RoomCallback) *LocalParticipant {
 	return &LocalParticipant{
 		baseParticipant: *newBaseParticipant(roomcallback),
-		engine:          engine,
+		Engine:          engine,
 	}
 }
 
@@ -27,10 +27,10 @@ func (p *LocalParticipant) PublishTrack(track webrtc.TrackLocal, name string) (*
 			kind:   kind,
 			track:  track,
 			name:   name,
-			client: p.engine.client,
+			client: p.Engine.client,
 		},
 	}
-	err := p.engine.client.SendRequest(&livekit.SignalRequest{
+	err := p.Engine.client.SendRequest(&livekit.SignalRequest{
 		Message: &livekit.SignalRequest_AddTrack{
 			AddTrack: &livekit.AddTrackRequest{
 				Cid:  track.ID(),
@@ -43,7 +43,7 @@ func (p *LocalParticipant) PublishTrack(track webrtc.TrackLocal, name string) (*
 		return nil, err
 	}
 
-	pubChan := p.engine.TrackPublishedChan()
+	pubChan := p.Engine.TrackPublishedChan()
 	var pubRes *livekit.TrackPublishedResponse
 
 	select {
@@ -54,7 +54,7 @@ func (p *LocalParticipant) PublishTrack(track webrtc.TrackLocal, name string) (*
 	}
 
 	// add transceivers
-	pub.transceiver, err = p.engine.publisher.PeerConnection().AddTransceiverFromTrack(track, webrtc.RTPTransceiverInit{
+	pub.transceiver, err = p.Engine.publisher.PeerConnection().AddTransceiverFromTrack(track, webrtc.RTPTransceiverInit{
 		Direction: webrtc.RTPTransceiverDirectionSendonly,
 	})
 	if err != nil {
@@ -76,7 +76,7 @@ func (p *LocalParticipant) PublishTrack(track webrtc.TrackLocal, name string) (*
 	pub.sid = pubRes.Track.Sid
 	p.addPublication(&pub)
 
-	p.engine.publisher.Negotiate()
+	p.Engine.publisher.Negotiate()
 
 	logger.Info("published track", "track", name)
 
@@ -96,7 +96,7 @@ func (p *LocalParticipant) PublishData(data []byte, kind livekit.DataPacket_Kind
 		},
 	}
 
-	if err := p.engine.ensurePublisherConnected(); err != nil {
+	if err := p.Engine.ensurePublisherConnected(); err != nil {
 		return err
 	}
 
@@ -107,9 +107,9 @@ func (p *LocalParticipant) PublishData(data []byte, kind livekit.DataPacket_Kind
 	}
 
 	if kind == livekit.DataPacket_RELIABLE {
-		return p.engine.reliableDC.Send(encoded)
+		return p.Engine.reliableDC.Send(encoded)
 	} else if kind == livekit.DataPacket_LOSSY {
-		return p.engine.lossyDC.Send(encoded)
+		return p.Engine.lossyDC.Send(encoded)
 	}
 
 	return nil
@@ -130,13 +130,13 @@ func (p *LocalParticipant) UnpublishTrack(sid string) error {
 
 	var err error
 	if localTrack, ok := pub.track.(webrtc.TrackLocal); ok {
-		for _, sender := range p.engine.publisher.pc.GetSenders() {
+		for _, sender := range p.Engine.publisher.pc.GetSenders() {
 			if sender.Track() == localTrack {
-				err = p.engine.publisher.pc.RemoveTrack(sender)
+				err = p.Engine.publisher.pc.RemoveTrack(sender)
 				break
 			}
 		}
-		p.engine.publisher.Negotiate()
+		p.Engine.publisher.Negotiate()
 	}
 
 	return err
